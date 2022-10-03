@@ -154,4 +154,7 @@ cython_debug/
 
 #ignore these files
 Results/.
-Data/.
+DATA/.
+DATA/cmc.names
+DATA/cmc.data
+DATA/hospital_discharge.csv
