@@ -302,3 +302,73 @@ pickle.dump([NCP_list_dataset,pureness_list_dataset,ex_times_dataset,sel_frame_d
 #pickle.dump(b,outfile)
 outfile.close() 
 
+
+#%%% 6.3 interplay between the metrics
+from statistics import mean
+headers = ['WifeAge', 'WifeEducation',
+           'HusbandEducation', 'ChildrenBorn',
+           'WifeReligion', 'WifeWorking',
+           'HusbandOccupation', 'SOLIndex',
+           'MediaExposure', 'ContraceptiveMethodUsed']
+
+cmc = pd.read_csv("DATA/cmc.data",
+                  header=None,
+                  names=headers,
+                  sep=',',
+                  engine='python')
+cmc.head()
+X = cmc.drop(columns=['ContraceptiveMethodUsed'])
+y = cmc['ContraceptiveMethodUsed'] == 1
+num_feat = [0, 3]
+cat_feat = [1, 2, 4, 5, 6, 7, 8]
+target_outcome = True  # geen anticonceptie (genant)
+feature_names = list(X.columns)
+qid = ['WifeAge', 'ChildrenBorn']
+discr_attr = 'WifeReligion'
+
+#modelling
+num=[i for i,v in enumerate(qid) if feature_names.index(v) in num_feat]
+cat=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
+X_train, y_train, X_test,y_test,clf,NICE_fit=model(X,y,feature_names, cat_feat, num_feat, target_outcome)
+#GRASP for different k's
+alfa=40
+max_iterations=5
+ex_times_k={}
+pureness_list_k={}
+NCP_list_k={}
+Ykn=[]
+Ykp=[]
+for k in [2,5,10,15,20,25,30]:
+    ex_times, pureness_list, NCP_list, gen_list, discr_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
+    ex_times_k[k]=ex_times
+    pureness_list_k[k]=pureness_list
+    NCP_list_k[k]=NCP_list
+    print(k)
+    print(mean(ex_times))
+    print(mean(pureness_list))
+    print(mean(NCP_list))
+    Ykn.append(mean(NCP_list))
+    Ykp.append(mean(pureness_list))
+
+#%%
+
+X= [2,5,10,15,20,25,30]
+#plt.bar(X, Ykn,1, label = 'NCP', color='b')
+plt.bar(X, Ykp,1, color='royalblue')
+plt.ylim(0.9,1.01)
+#plt.legend()
+plt.xlabel('Values of k', fontsize=15)
+plt.ylabel('Pureness', fontsize =15)
+filename='Figures/interplay_pureness'
+plt.savefig(filename, bbox_inches='tight')
+plt.show()
+
+
+X= [2,5,10,15,20,25,30]
+plt.bar(X, Ykn,1,color='royalblue')
+#plt.legend()
+plt.xlabel('Values of k', fontsize=15)
+plt.ylabel('NCP', fontsize =15)
+filename='Figures/interplay_ncp'
+plt.savefig(filename, bbox_inches='tight')
+plt.show() 

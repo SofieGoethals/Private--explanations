@@ -128,6 +128,7 @@ for key in pureness_grasp.keys():
 
 #%% fairness results
 # watch out that majority/minority group is correct
+plt.rcParams['font.size'] = '18'
 
 discr_attr, discr_attr_values,discr_list={},{},{}
 
