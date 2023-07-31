@@ -289,6 +289,56 @@ def calculate_metrics_mondrian(NICE_fit,clf,X,X_train, X_test, y_test,num,cat,fe
             sel_frame_dataset.append(sel_frame)
     return  NCP_list_dataset,pureness_list_dataset,ex_times_dataset,sel_frame_dataset
 
+# def anom_instance(dfn,instance,qid,num,cat):
+#     sel_frame=pd.DataFrame(columns=qid)
+#     #instance_eq=instance.copy()
+#     for i in range(len(dfn)):
+#         for  q in qid:
+#             if qid.index(q) in num:
+#                 if type(dfn.iloc[i][q])==str: 
+#                     if dfn.iloc[i][q].count('-')>=2:
+#                         temp = dfn.iloc[i][q].split('-')
+#                         low, high = '-'.join(temp[:2]), '-'.join(temp[2:])
+#                         if instance[q]>=float(low) and instance[q]<= float(high):
+#                             continue
+#                         else:
+#                             break 
+#                     elif (type(dfn.iloc[i][q])==str and '-' in dfn.iloc[i][q]):
+#                         low,high=dfn.iloc[i][q].split('-')
+#                         if instance[q]>=float(low) and instance[q]<= float(high):
+#                             continue
+#                         else:
+#                             break 
+#                 elif (dfn.iloc[i][q]==instance[q] or float(dfn.iloc[i][q])==instance[q]):
+#                         continue
+#                 else:
+#                     break
+#             if qid.index(q) in cat:
+#                 if (type(dfn.iloc[i][q])==str and ',' in dfn.iloc[i][q]):
+#                     lijst=dfn.iloc[i][q].split(',')
+#                     try:
+#                         lijst=[float(item) for item in lijst]
+#                     except ValueError:
+#                         lijst=lijst
+#                     if instance[q] in lijst:
+#                         continue
+#                     else:
+#                         break 
+#                 else:
+#                     try: 
+#                         if float(dfn.iloc[i][q])==instance[q]:
+#                             continue
+#                     except ValueError:
+#                         if dfn.iloc[i][q]==instance[q]: #or float(dfn.iloc[i][q])==instance[q]):
+#                             continue
+#                         else:
+#                             break
+#         else:
+#             sel_frame=sel_frame.append(dfn.iloc[i])
+#     if len(sel_frame)==0:
+#         print('Error, no equivalence class found for this counterfactual instance')
+#     return sel_frame
+
 def anom_instance(dfn,instance,qid,num,cat):
     sel_frame=pd.DataFrame(columns=qid)
     #instance_eq=instance.copy()
@@ -323,23 +373,29 @@ def anom_instance(dfn,instance,qid,num,cat):
                     if instance[q] in lijst:
                         continue
                     else:
-                        break 
+                        try:
+                            if float(instance[q]) in lijst:
+                                continue
+                            else:
+                                break
+                        except ValueError:
+                            break 
                 else:
-                    try: 
-                        if float(dfn.iloc[i][q])==instance[q]:
-                            continue
-                    except ValueError:
-                        if dfn.iloc[i][q]==instance[q]: #or float(dfn.iloc[i][q])==instance[q]):
-                            continue
-                        else:
+                    if dfn.iloc[i][q]==instance[q]: #or float(dfn.iloc[i][q])==instance[q]):
+                        continue
+                    else:
+                        try: 
+                            if float(dfn.iloc[i][q])==instance[q]:
+                                continue
+                            else:
+                                break
+                        except ValueError:
                             break
         else:
             sel_frame=sel_frame.append(dfn.iloc[i])
     if len(sel_frame)==0:
         print('Error, no equivalence class found for this counterfactual instance')
     return sel_frame
-
-    
 
 def calculate_solution_quality_dataset(trainingset,selected,num, cat):  
     NCP_attribute={}
@@ -418,7 +474,7 @@ def calculate_pureness_dataset(sel_frame,instance,trainingset,feature_names,clf,
         #if clf.predict([sample_frame.iloc[i]])==target_outcome:
             #teller+=1
     #pureness=teller/noemer
-    predictions=clf.predict(sample_frame)
+    predictions=clf.predict(sample_frame.values)
     counts=Counter(predictions)
     pureness=counts[target_outcome]/len(sample_frame)
     return pureness

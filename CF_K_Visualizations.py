@@ -31,29 +31,21 @@ from tqdm import tqdm
 import pickle
 import matplotlib.ticker as mtick
 import matplotlib.patches as mpatches
+
 #%% loading data
 
-NCP_mondrian={}
-pureness_mondrian={}
-ex_times_mondrian={}
-sel_frame_mondrian={}
-NCP_grasp={}
-pureness_grasp={}
-ex_times_grasp={}
-gen_list_grasp={}
-discr_list_grasp={}
+
+results_mondrian, results_grasp={},{}
 
 def load_data(dataset):
-    filename_mondrian= 'Results/mondrian_results/' + dataset
-    filename_grasp= 'Results/grasp_results_time/' + dataset
+    filename_mondrian= 'Revision/mondrian_results/' + dataset
+    filename_grasp= 'Revision/grasp_results_time/' + dataset
     infile = open(filename_mondrian,'rb')
-    results= pickle.load(infile)
+    results_mondrian[dataset]= pickle.load(infile)
     infile.close()
-    NCP_mondrian[dataset],pureness_mondrian[dataset],ex_times_mondrian[dataset], sel_frame_mondrian[dataset]=results
     infile = open(filename_grasp,'rb')
-    results= pickle.load(infile)
+    results_grasp[dataset]= pickle.load(infile)
     infile.close()
-    NCP_grasp[dataset],pureness_grasp[dataset],ex_times_grasp[dataset],gen_list_grasp[dataset], discr_list_grasp[dataset]=results
 
 
 load_data('heart_c')
@@ -63,6 +55,30 @@ load_data('adult')
 load_data('informs')
 load_data('hospital')
 
+#%% load the extra metrics
+# Load the excel file
+df = pd.read_excel('Revision/extra_metrics.xlsx',sheet_name='Mondrian')
+# Convert each column to a dictionary of dictionaries
+extra_metrics_mondrian={}
+for column in df.columns[1:]:
+    column_data = {}
+    for i, row in df.iterrows():
+        #if i == 0:
+            #continue
+        column_data[row[0]] = row[column]
+    extra_metrics_mondrian[column] = column_data
+    
+# Load the excel file
+df = pd.read_excel('Revision/extra_metrics.xlsx',sheet_name='Grasp')
+# Convert each column to a dictionary of dictionaries
+extra_metrics_grasp={}
+for column in df.columns[1:]:
+    column_data = {}
+    for i, row in df.iterrows():
+        #if i == 0:
+            #continue
+        column_data[row[0]] = row[column]
+    extra_metrics_grasp[column] = column_data
 
 
 
@@ -70,27 +86,33 @@ load_data('hospital')
 #%% calculate metrics
 from statistics import median,mean
 print('Calculating metrics')
-for key in NCP_grasp.keys():
+for key in results_grasp.keys():
     print(key)
-    print(mean(NCP_grasp[key]))
-    print(mean(pureness_grasp[key]))
-    print(mean(ex_times_grasp[key]))
-    print(mean(ex_times_mondrian[key]))
-    print('median')
-    print(median(NCP_grasp[key]))
-    print(median(pureness_grasp[key]))
-    print(median(ex_times_grasp[key]))
-    print(median(ex_times_mondrian[key]))
+    print(mean(results_grasp[key]['NCP_list']))
+    print(mean(results_grasp[key]['pureness_list']))
+    #a=[median(results_grasp[key]['ex_times']) if x>200 else x for x in results_grasp[key]['ex_times']] #outliers for when computer went to sleep
+    #print(mean(a))
+    print(median(results_grasp[key]['ex_times'])) ## more robust
+    print(extra_metrics_grasp[key]['dm_metric'])
+    print('DM metric / amount of anonymized explanations: {}'.format(extra_metrics_grasp[key]['dm_metric']/len(results_grasp[key]['NCP_list'])))
+    print(extra_metrics_grasp[key]['cm_metric'])
+    print('MONDRIAN')
+    print(mean(results_mondrian[key]['NCP_list']))
+    print(mean(results_mondrian[key]['pureness_list']))
+    print(median(results_mondrian[key]['ex_times'])) ## to be fixed
+    print(extra_metrics_mondrian[key]['dm_metric'])
+    print('DM metric / amount of anonymized explanations: {}'.format(extra_metrics_mondrian[key]['dm_metric']/len(results_mondrian[key]['NCP_list'])))
+    print(extra_metrics_mondrian[key]['cm_metric'])
     print(' ')
 
 #%% comparison with mondrian
 print('Comparison with Mondrian')
 #unsorted NCP
-for key in NCP_grasp.keys():
+for key in results_grasp.keys():
     plt.figure(figsize=(20,10))
     plt.rcParams['font.size'] = '40'
-    plt.plot(NCP_mondrian[key],'b-', label='dataset',linewidth=3)
-    plt.plot(NCP_grasp[key],'--', color='lightsteelblue', linewidth=4, label='explanations')
+    plt.plot(results_mondrian[key]['NCP_list'],'b-', label='dataset',linewidth=3)
+    plt.plot(results_grasp[key]['NCP_list'],'--', color='lightsteelblue', linewidth=4, label='explanations')
     plt.ylabel('NCP', fontsize=50)
     plt.xlabel('Instance of test set',fontsize=50)
     plt.legend(fontsize=45)
@@ -99,31 +121,31 @@ for key in NCP_grasp.keys():
     plt.show()
     
 #sorted NCP
-for key in NCP_grasp.keys():
+for key in results_grasp.keys():
     plt.figure(figsize=(20,10))
     plt.rcParams['font.size'] = '40'
-    plt.plot(sorted(NCP_mondrian[key]),'b-', label='dataset',linewidth=3)
-    plt.plot(sorted(NCP_grasp[key]),'--', color='lightsteelblue', linewidth=4, label='explanations')
+    plt.plot(sorted(results_mondrian[key]['NCP_list']),'b-', label='dataset',linewidth=3)
+    plt.plot(sorted(results_grasp[key]['NCP_list']),'--', color='lightsteelblue', linewidth=4, label='explanations')
     plt.ylabel('NCP', fontsize=50)
     plt.xlabel('Instances (sorted)',fontsize=50)
     plt.legend(fontsize=45)
     plt.title(key,fontsize=60)  
     filename='Figures/Mondrian/'+key +'_NCP'
-    plt.savefig(filename, bbox_inches='tight')  
+    #plt.savefig(filename, bbox_inches='tight')  
     plt.show()
     
 #sorted pureness    
-for key in pureness_grasp.keys():
+for key in results_grasp.keys():
     plt.figure(figsize=(20,10))
     plt.rcParams['font.size'] = '40'
-    plt.plot(sorted(pureness_mondrian[key]),'b-', label='dataset',linewidth=3)
-    plt.plot(sorted(pureness_grasp[key]),'--', color='lightsteelblue', linewidth=4, label='explanations')
+    plt.plot(sorted(results_mondrian[key]['pureness_list']),'b-', label='dataset',linewidth=3)
+    plt.plot(sorted(results_grasp[key]['pureness_list']),'--', color='lightsteelblue', linewidth=4, label='explanations')
     plt.ylabel('Pureness', fontsize=50)
     plt.xlabel('Instances (sorted)',fontsize=50)
     plt.legend(fontsize=45)
     plt.title(key,fontsize=60)  
     filename='Figures/Mondrian/'+key +'_pureness'
-    plt.savefig(filename, bbox_inches='tight')  
+    #plt.savefig(filename, bbox_inches='tight')  
     plt.show()
 
 #%% fairness results
@@ -132,12 +154,12 @@ plt.rcParams['font.size'] = '18'
 
 discr_attr, discr_attr_values,discr_list={},{},{}
 
-discr_list['german']=pd.cut(x=discr_list_grasp['german'],bins=[0,0.99,3], labels=['F','M'], include_lowest=True).tolist()
-discr_list['informs']=pd.cut(x=discr_list_grasp['informs'],bins=[0,1,6], labels=['White','Non-White']).tolist()
-discr_list['heart_c']=pd.cut(x=discr_list_grasp['heart_c'],bins=[0,0.99,1], labels=['F','M'], include_lowest=True).tolist()
-discr_list['adult']=pd.cut(x=discr_list_grasp['adult'],bins=[0,0.99,1], labels=['F','M'], include_lowest=True).tolist()
-discr_list['cmc']=pd.cut(x=discr_list_grasp['cmc'],bins=[0,0.99,1], labels=['Non-Islam','Islam'], include_lowest=True).tolist()
-discr_list['hospital']=discr_list_grasp['hospital']
+discr_list['german']=pd.cut(x=results_grasp['german']['discr_list'],bins=[0,0.99,3], labels=['F','M'], include_lowest=True).tolist()
+discr_list['informs']=pd.cut(x=results_grasp['informs']['discr_list'],bins=[0,1,6], labels=['White','Non-White']).tolist()
+discr_list['heart_c']=pd.cut(x=results_grasp['heart_c']['discr_list'],bins=[0,0.99,1], labels=['F','M'], include_lowest=True).tolist()
+discr_list['adult']=pd.cut(x=results_grasp['adult']['discr_list'],bins=[0,0.99,1], labels=['F','M'], include_lowest=True).tolist()
+discr_list['cmc']=pd.cut(x=results_grasp['cmc']['discr_list'],bins=[0,0.99,1], labels=['Non-Islam','Islam'], include_lowest=True).tolist()
+discr_list['hospital']=results_grasp['hospital']['discr_list']
 
 discr_attr['heart_c']='Sex'
 discr_attr['cmc']='WifeReligion'
@@ -160,23 +182,23 @@ def calc_unfairness(key):
     c=[]
     vals,counts=np.unique(discr_list[key], return_counts=True)
     count_ind=np.argsort(-counts)
-    for val in vals[count_ind]: #majority grup first
+    for val in vals[count_ind]: #majority group first
         print(val)
         a.append(val)
         indices = [i for i, x in enumerate(discr_list[key]) if x == val]
-        res_list = list(itemgetter(*indices)(NCP_grasp[key]))
+        res_list = list(itemgetter(*indices)(results_grasp[key]['NCP_list']))
         print(mean(res_list))
         b.append(mean(res_list))
-        res_list2=list(itemgetter(*indices)(pureness_grasp[key]))
+        res_list2=list(itemgetter(*indices)(results_grasp[key]['pureness_list']))
         print(mean(res_list2))
-        c.append(mean(res_list))
+        c.append(mean(res_list2))
     return a,b
 
 maj_patch = mpatches.Patch(color='royalblue', label='Majority group')
 min_patch = mpatches.Patch(color='lightsteelblue', label='Minority group')
 mid_patch= mpatches.Patch(color='cornflowerblue', label='Middle group')
 
-for key in NCP_grasp.keys():
+for key in results_grasp.keys():
     print(key)
     a,b=calc_unfairness(key) 
     plt.bar(a, b, color=('royalblue','lightsteelblue'))
@@ -185,7 +207,8 @@ for key in NCP_grasp.keys():
     plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
     plt.xticks([0, 1], discr_attr_values[key], fontsize=15, rotation=0)
     plt.legend(handles=[maj_patch,min_patch], loc = 'lower left',fontsize=15)
-    filename='Figures/Fairness/'+key
+    filename='Revision/Figures/Fairness/'+key
+    plt.title(key)
     plt.savefig(filename, bbox_inches="tight") 
     plt.show()
 

@@ -72,6 +72,7 @@ def grasp_results(discr_attr,X,y,X_train,X_test,y_test, y_train,target_outcome, 
     NCP_list=[]
     discr_list=[]
     gen_list=[]
+    instance_list=[]
     X_test_values=X.iloc[X_test].values
     y_test_values=y.iloc[X_test].values
     testdata = X.iloc[X_test]
@@ -96,8 +97,9 @@ def grasp_results(discr_attr,X,y,X_train,X_test,y_test, y_train,target_outcome, 
             pureness_list.append(best_pureness)
             NCP_list.append(best_NCP)
             gen_list.append(best_instance)
+            instance_list.append(instance)
             discr_list.append(testdata[discr_attr].iloc[i])
-    return ex_times, pureness_list, NCP_list, gen_list, discr_list
+    return ex_times, pureness_list, NCP_list, gen_list, discr_list,instance_list
 
 
 def greedy_randomized_construction(trainingdata,y_train,target_outcome, instance, k, alfa,  num_feat, cat_feat,feature_names,qid,clf):
@@ -216,7 +218,7 @@ def GRASP(trainingdata, y_train,target_outcome, instance, k, alfa, qid, num_feat
     timeout=time.time()+30
     i=0
     #for i in range(max_iterations):
-    while i<=max_iterations and time.time()<timeout:
+    while i<=max_iterations: #and time.time()<timeout:
         #print('iteratie '+str(i))
         pureness,NCP,selected,gen_instance=greedy_randomized_construction(trainingdata, y_train,target_outcome, instance, k, alfa,  num_feat, cat_feat,feature_names,qid,clf)
         #print('after construction: {}'.format(gen_instance))
@@ -395,7 +397,7 @@ def calculate_pureness_sampling(instance,generalized_instance,trainingset,featur
             #teller+=1
     #pureness=teller/noemer
     #calculate pureness
-    predictions=clf.predict(sample_frame)
+    predictions=clf.predict(sample_frame.values)
     counts=Counter(predictions)
     pureness=counts[target_outcome]/len(sample_frame)
     return pureness

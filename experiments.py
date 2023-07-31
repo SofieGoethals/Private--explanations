@@ -30,7 +30,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-import pickle
+import pickle, joblib
 
 from mondrian_k_anonymization import mondrian_all, calculate_metrics_mondrian
 # %% settings
@@ -56,32 +56,40 @@ discr_attr = 'sex'
 num=[i for i,v in enumerate(qid) if feature_names.index(v) in num_feat]
 cat=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
 X_train, y_train, X_test,y_test,clf,NICE_fit=model(X,y,feature_names, cat_feat, num_feat, target_outcome)
+
+
+#Save results modeling
+filename = 'Revision/modelling_results/'+dataset
+joblib.dump(clf, filename  +  '_pipeline.pkl')
+
 #GRASP
-ex_times, pureness_list, NCP_list, gen_list, discr_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
+ex_times, pureness_list, NCP_list, gen_list, discr_list,instance_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
 
 #Save results GRASP
-filename = 'Results/grasp_results_time/'+dataset
-outfile = open(filename,'wb')        
-pickle.dump([NCP_list,pureness_list,ex_times,gen_list,discr_list],outfile)
+filename = 'Revision/grasp_results_time/'+dataset
+outfile = open(filename,'wb')  
+grasp_dict={'NCP_list': NCP_list, 'pureness_list': pureness_list, 'ex_times':ex_times, 'gen_list': gen_list, 'discr_list': discr_list, 'instance_list': instance_list}      
+pickle.dump(grasp_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
 #Mondrian
 cat_indices=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
-dfn=mondrian_all(X,qid, cat_indices, k, part = 's', aggr = 'r')
+dfn=mondrian_all(X.iloc[X_train],qid, cat_indices, k, part = 's', aggr = 'r')
 NCP_list_dataset,pureness_list_dataset,ex_times_dataset, sel_frame_dataset= calculate_metrics_mondrian(NICE_fit,clf,X,X_train, X_test, y_test,num,cat,feature_names,target_outcome,qid,dfn)
 
 #SAVE RESULTS MONDRIAN
-filename = 'Results/mondrian_results/'+dataset
+filename = 'Revision/mondrian_results/'+dataset
 outfile = open(filename,'wb')        
-pickle.dump([NCP_list_dataset,pureness_list_dataset,ex_times_dataset,sel_frame_dataset],outfile)
+mondr_dict={'NCP_list':NCP_list_dataset,'pureness_list':pureness_list_dataset,'ex_times':ex_times_dataset,'sel_frame':sel_frame_dataset,'dfn':dfn }
+pickle.dump(mondr_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
 
 
 #%%
-
+dataset='cmc'
 headers = ['WifeAge', 'WifeEducation',
            'HusbandEducation', 'ChildrenBorn',
            'WifeReligion', 'WifeWorking',
@@ -107,31 +115,42 @@ discr_attr = 'WifeReligion'
 num=[i for i,v in enumerate(qid) if feature_names.index(v) in num_feat]
 cat=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
 X_train, y_train, X_test,y_test,clf,NICE_fit=model(X,y,feature_names, cat_feat, num_feat, target_outcome)
+
+
+#Save results modeling
+
+filename=filename = 'Revision/modelling_results/'+dataset
+joblib.dump(clf, filename  +  '_pipeline.pkl')
+
 #GRASP
-ex_times, pureness_list, NCP_list, gen_list, discr_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
+ex_times, pureness_list, NCP_list, gen_list, discr_list,instance_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
 
 #Save results GRASP
-filename = 'Results/grasp_results_time/cmc'
-outfile = open(filename,'wb')        
-pickle.dump([NCP_list,pureness_list,ex_times,gen_list,discr_list],outfile)
+filename = 'Revision/grasp_results_time/'+dataset
+outfile = open(filename,'wb')  
+grasp_dict={'NCP_list': NCP_list, 'pureness_list': pureness_list, 'ex_times':ex_times, 'gen_list': gen_list, 'discr_list': discr_list, 'instance_list': instance_list}      
+pickle.dump(grasp_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
 #Mondrian
 cat_indices=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
-dfn=mondrian_all(X,qid, cat_indices, k, part = 's', aggr = 'r')
+dfn=mondrian_all(X.iloc[X_train],qid, cat_indices, k, part = 's', aggr = 'r')
 NCP_list_dataset,pureness_list_dataset,ex_times_dataset, sel_frame_dataset= calculate_metrics_mondrian(NICE_fit,clf,X,X_train, X_test, y_test,num,cat,feature_names,target_outcome,qid,dfn)
 
 #SAVE RESULTS MONDRIAN
-filename = 'Results/mondrian_results/cmc'
+filename = 'Revision/mondrian_results/'+dataset
 outfile = open(filename,'wb')        
-pickle.dump([NCP_list_dataset,pureness_list_dataset,ex_times_dataset,sel_frame_dataset],outfile)
+mondr_dict={'NCP_list':NCP_list_dataset,'pureness_list':pureness_list_dataset,'ex_times':ex_times_dataset,'sel_frame':sel_frame_dataset,'dfn':dfn }
+pickle.dump(mondr_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
 
 
-#%%
+
+#%%german
+dataset='german'
 german = fetch_data('german')
 X = german.drop(columns=['target'])
 y = german.loc[:, 'target']
@@ -151,25 +170,33 @@ discr_attr = 'Personal-status'  # of Personal-status
 num=[i for i,v in enumerate(qid) if feature_names.index(v) in num_feat]
 cat=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
 X_train, y_train, X_test,y_test,clf,NICE_fit=model(X,y,feature_names, cat_feat, num_feat, target_outcome)
+
+#Save results modeling
+
+filename=filename = 'Revision/modelling_results/'+dataset
+joblib.dump(clf, filename  +  '_pipeline.pkl')
+
 #GRASP
-ex_times, pureness_list, NCP_list, gen_list, discr_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
+ex_times, pureness_list, NCP_list, gen_list, discr_list,instance_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
 
 #Save results GRASP
-filename = 'Results/grasp_results_time/german'
-outfile = open(filename,'wb')        
-pickle.dump([NCP_list,pureness_list,ex_times,gen_list,discr_list],outfile)
+filename = 'Revision/grasp_results_time/'+dataset
+outfile = open(filename,'wb')  
+grasp_dict={'NCP_list': NCP_list, 'pureness_list': pureness_list, 'ex_times':ex_times, 'gen_list': gen_list, 'discr_list': discr_list, 'instance_list': instance_list}      
+pickle.dump(grasp_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
 #Mondrian
 cat_indices=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
-dfn=mondrian_all(X,qid, cat_indices, k, part = 's', aggr = 'r')
+dfn=mondrian_all(X.iloc[X_train],qid, cat_indices, k, part = 's', aggr = 'r')
 NCP_list_dataset,pureness_list_dataset,ex_times_dataset, sel_frame_dataset= calculate_metrics_mondrian(NICE_fit,clf,X,X_train, X_test, y_test,num,cat,feature_names,target_outcome,qid,dfn)
 
 #SAVE RESULTS MONDRIAN
-filename = 'Results/mondrian_results/german'
+filename = 'Revision/mondrian_results/'+dataset
 outfile = open(filename,'wb')        
-pickle.dump([NCP_list_dataset,pureness_list_dataset,ex_times_dataset,sel_frame_dataset],outfile)
+mondr_dict={'NCP_list':NCP_list_dataset,'pureness_list':pureness_list_dataset,'ex_times':ex_times_dataset,'sel_frame':sel_frame_dataset,'dfn':dfn }
+pickle.dump(mondr_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
@@ -189,36 +216,50 @@ discr_attr = 'sex'
 #modelling
 num=[i for i,v in enumerate(qid) if feature_names.index(v) in num_feat]
 cat=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
+
 X_train, y_train, X_test,y_test,clf,NICE_fit=model(X,y,feature_names, cat_feat, num_feat, target_outcome)
+
+#Save results modeling
+
+filename=filename = 'Revision/modelling_results/'+dataset
+joblib.dump(clf, filename  +  '_pipeline.pkl')
+
 #GRASP
-ex_times, pureness_list, NCP_list, gen_list, discr_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
+ex_times, pureness_list, NCP_list, gen_list, discr_list,instance_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
 
 #Save results GRASP
-filename = 'Results/grasp_results_time/adult'
-outfile = open(filename,'wb')        
-pickle.dump([NCP_list,pureness_list,ex_times,gen_list,discr_list],outfile)
+filename = 'Revision/grasp_results_time/'+dataset
+outfile = open(filename,'wb')  
+grasp_dict={'NCP_list': NCP_list, 'pureness_list': pureness_list, 'ex_times':ex_times, 'gen_list': gen_list, 'discr_list': discr_list, 'instance_list': instance_list}      
+pickle.dump(grasp_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
 #Mondrian
 cat_indices=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
-dfn=mondrian_all(X,qid, cat_indices, k, part = 's', aggr = 'r')
+dfn=mondrian_all(X.iloc[X_train],qid, cat_indices, k, part = 's', aggr = 'r')
 NCP_list_dataset,pureness_list_dataset,ex_times_dataset, sel_frame_dataset= calculate_metrics_mondrian(NICE_fit,clf,X,X_train, X_test, y_test,num,cat,feature_names,target_outcome,qid,dfn)
 
 #SAVE RESULTS MONDRIAN
-filename = 'Results/mondrian_results/adult'
+filename = 'Revision/mondrian_results/'+dataset
 outfile = open(filename,'wb')        
-pickle.dump([NCP_list_dataset,pureness_list_dataset,ex_times_dataset,sel_frame_dataset],outfile)
+mondr_dict={'NCP_list':NCP_list_dataset,'pureness_list':pureness_list_dataset,'ex_times':ex_times_dataset,'sel_frame':sel_frame_dataset,'dfn':dfn }
+pickle.dump(mondr_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
 
+
     #%%
+    
+dataset='informs'
 url = 'https://github.com/kaylode/k-anonymity/blob/main/data/informs/informs.csv'
 url = 'https://raw.githubusercontent.com/kaylode/k-anonymity/main/data/informs/informs.csv'
 informs = pd.read_csv(url, error_bad_lines=False, sep=';')
 informs.dropna(inplace=True)
-informs = informs.sample(n=5000, ignore_index=True)
+random.seed(0)
+informs = informs.sample(n=5000, ignore_index=True, random_state=0)
+informs.head()
 
 X = informs.drop(columns=['income', 'DUID', 'PID', 'ID','RACEAX','RACEBX','RACEWX','RACETHNX'])
 y = informs['income'] > mean(informs['income'])
@@ -235,37 +276,54 @@ discr_attr = 'RACEX'
 num=[i for i,v in enumerate(qid) if feature_names.index(v) in num_feat]
 cat=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
 X_train, y_train, X_test,y_test,clf,NICE_fit=model(X,y,feature_names, cat_feat, num_feat, target_outcome)
+
+trainingdata=X.iloc[X_train]
+trainingset=trainingdata[qid]
+
+
+#Save results modeling
+filename=filename = 'Revision/modelling_results/'+dataset
+joblib.dump(clf, filename  +  '_pipeline.pkl')
+
+
 #GRASP
-ex_times, pureness_list, NCP_list, gen_list, discr_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
+ex_times, pureness_list, NCP_list, gen_list, discr_list,instance_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
 
 #Save results GRASP
-filename = 'Results/grasp_results_time/informs'
-outfile = open(filename,'wb')        
-pickle.dump([NCP_list,pureness_list,ex_times,gen_list,discr_list],outfile)
+filename = 'Revision/grasp_results_time/'+dataset
+outfile = open(filename,'wb')  
+grasp_dict={'NCP_list': NCP_list, 'pureness_list': pureness_list, 'ex_times':ex_times, 'gen_list': gen_list, 'discr_list': discr_list, 'instance_list': instance_list}      
+pickle.dump(grasp_dict,outfile)
 #pickle.dump(b,outfile)
-outfile.close() 
+outfile.close()  
 
 #Mondrian
 cat_indices=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
-dfn=mondrian_all(X,qid, cat_indices, k, part = 's', aggr = 'r')
+dfn=mondrian_all(X.iloc[X_train],qid, cat_indices, k, part = 's', aggr = 'r')
 NCP_list_dataset,pureness_list_dataset,ex_times_dataset, sel_frame_dataset= calculate_metrics_mondrian(NICE_fit,clf,X,X_train, X_test, y_test,num,cat,feature_names,target_outcome,qid,dfn)
 
 #SAVE RESULTS MONDRIAN
-filename = 'Results/mondrian_results/informs'
+filename = 'Revision/mondrian_results/'+dataset
 outfile = open(filename,'wb')        
-pickle.dump([NCP_list_dataset,pureness_list_dataset,ex_times_dataset,sel_frame_dataset],outfile)
+mondr_dict={'NCP_list':NCP_list_dataset,'pureness_list':pureness_list_dataset,'ex_times':ex_times_dataset,'sel_frame':sel_frame_dataset,'dfn':dfn }
+pickle.dump(mondr_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
 
 # %%
-hospital = pd.read_csv('DATA/hospital_discharge.csv')
-hospital.dropna(inplace=True)
+dataset='hospital'
+hospital = pd.read_csv('DATA/hospital_discharge.csv', sep=';', header=[0], on_bad_lines='skip')
+hospital=hospital.dropna()
 hospital.reset_index(drop=True, inplace=True)
 hospital['Length of Stay']=pd.to_numeric(hospital['Length of Stay'], errors ='coerce').fillna(120).astype('int')
 hospital['Total Costs'] = hospital['Total Costs'].replace('[\$,]', '', regex=True).astype(float)
 hospital['Total Charges'] = hospital['Total Charges'].replace('[\$,]', '', regex=True).astype(float)
-X = hospital.drop(columns=['Health Service Area','Discharge Year', 'Hospital County','Operating Certificate Number', 'Facility Id', 'Facility Name', 'Attending Provider License Number','Operating Provider License Number', 'Other Provider License Number','CCS Diagnosis Code', 'CCS Procedure Code',  'APR DRG Code','APR MDC Code','APR Severity of Illness Code','Total Charges', 'Total Costs'])
+
+hospital = hospital.sample(n=5000, ignore_index=True, random_state=0)
+#X = hospital.drop(columns=['Health Service Area','Discharge Year', 'Hospital County','Operating Certificate Number', 'Facility Id', 'Facility Name', 'Attending Provider License Number','Operating Provider License Number', 'Other Provider License Number','CCS Diagnosis Code', 'CCS Procedure Code',  'APR DRG Code','APR MDC Code','APR Severity of Illness Code','Total Charges', 'Total Costs'])
+X = hospital.drop(columns=['Health Service Area','Discharge Year', 'Hospital County','Operating Certificate Number', 'Facility Id', 'Facility Name', 'CCS Diagnosis Code', 'CCS Procedure Code',  'APR DRG Code','APR MDC Code','APR Severity of Illness Code','Total Charges', 'Total Costs'])
+#X['Zip Code - 3 digits']=X['Zip Code - 3 digits'].astype(str)
 y = hospital['Total Costs'] > mean(hospital['Total Costs'])
 
 feature_names = list(X.columns)
@@ -280,95 +338,36 @@ discr_attr = 'Gender'
 num=[i for i,v in enumerate(qid) if feature_names.index(v) in num_feat]
 cat=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
 X_train, y_train, X_test,y_test,clf,NICE_fit=model(X,y,feature_names, cat_feat, num_feat, target_outcome)
+
+
+
+
+#Save results modeling
+
+filename=filename = 'Revision/modelling_results/'+dataset
+joblib.dump(clf, filename  +  '_pipeline.pkl')
+
+
 #GRASP
-ex_times, pureness_list, NCP_list, gen_list, discr_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
+ex_times, pureness_list, NCP_list, gen_list, discr_list,instance_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
 
 #Save results GRASP
-filename = 'Results/grasp_results_time/hospital'
-outfile = open(filename,'wb')        
-pickle.dump([NCP_list,pureness_list,ex_times,gen_list,discr_list],outfile)
+filename = 'Revision/grasp_results_time/'+dataset
+outfile = open(filename,'wb')  
+grasp_dict={'NCP_list': NCP_list, 'pureness_list': pureness_list, 'ex_times':ex_times, 'gen_list': gen_list, 'discr_list': discr_list, 'instance_list': instance_list}      
+pickle.dump(grasp_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
 
 #Mondrian
 cat_indices=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
-dfn=mondrian_all(X,qid, cat_indices, k, part = 's', aggr = 'r')
+dfn=mondrian_all(X.iloc[X_train],qid, cat_indices, k, part = 's', aggr = 'r')
 NCP_list_dataset,pureness_list_dataset,ex_times_dataset, sel_frame_dataset= calculate_metrics_mondrian(NICE_fit,clf,X,X_train, X_test, y_test,num,cat,feature_names,target_outcome,qid,dfn)
 
 #SAVE RESULTS MONDRIAN
-filename = 'Results/mondrian_results/hospital'
+filename = 'Revision/mondrian_results/'+dataset
 outfile = open(filename,'wb')        
-pickle.dump([NCP_list_dataset,pureness_list_dataset,ex_times_dataset,sel_frame_dataset],outfile)
+mondr_dict={'NCP_list':NCP_list_dataset,'pureness_list':pureness_list_dataset,'ex_times':ex_times_dataset,'sel_frame':sel_frame_dataset,'dfn':dfn }
+pickle.dump(mondr_dict,outfile)
 #pickle.dump(b,outfile)
 outfile.close() 
-
-
-#%%% 6.3 interplay between the metrics
-from statistics import mean
-headers = ['WifeAge', 'WifeEducation',
-           'HusbandEducation', 'ChildrenBorn',
-           'WifeReligion', 'WifeWorking',
-           'HusbandOccupation', 'SOLIndex',
-           'MediaExposure', 'ContraceptiveMethodUsed']
-
-cmc = pd.read_csv("DATA/cmc.data",
-                  header=None,
-                  names=headers,
-                  sep=',',
-                  engine='python')
-cmc.head()
-X = cmc.drop(columns=['ContraceptiveMethodUsed'])
-y = cmc['ContraceptiveMethodUsed'] == 1
-num_feat = [0, 3]
-cat_feat = [1, 2, 4, 5, 6, 7, 8]
-target_outcome = True  # geen anticonceptie (genant)
-feature_names = list(X.columns)
-qid = ['WifeAge', 'ChildrenBorn']
-discr_attr = 'WifeReligion'
-
-#modelling
-num=[i for i,v in enumerate(qid) if feature_names.index(v) in num_feat]
-cat=[i for i,v in enumerate(qid) if feature_names.index(v) in cat_feat]
-X_train, y_train, X_test,y_test,clf,NICE_fit=model(X,y,feature_names, cat_feat, num_feat, target_outcome)
-#GRASP for different k's
-alfa=40
-max_iterations=5
-ex_times_k={}
-pureness_list_k={}
-NCP_list_k={}
-Ykn=[]
-Ykp=[]
-for k in [2,5,10,15,20,25,30]:
-    ex_times, pureness_list, NCP_list, gen_list, discr_list=grasp_results(discr_attr,X,y,X_train,X_test,y_test,y_train,target_outcome,  k, alfa, qid, num_feat, cat_feat,feature_names,max_iterations,clf, NICE_fit)
-    ex_times_k[k]=ex_times
-    pureness_list_k[k]=pureness_list
-    NCP_list_k[k]=NCP_list
-    print(k)
-    print(mean(ex_times))
-    print(mean(pureness_list))
-    print(mean(NCP_list))
-    Ykn.append(mean(NCP_list))
-    Ykp.append(mean(pureness_list))
-
-#%%
-
-X= [2,5,10,15,20,25,30]
-#plt.bar(X, Ykn,1, label = 'NCP', color='b')
-plt.bar(X, Ykp,1, color='royalblue')
-plt.ylim(0.9,1.01)
-#plt.legend()
-plt.xlabel('Values of k', fontsize=15)
-plt.ylabel('Pureness', fontsize =15)
-filename='Figures/interplay_pureness'
-plt.savefig(filename, bbox_inches='tight')
-plt.show()
-
-
-X= [2,5,10,15,20,25,30]
-plt.bar(X, Ykn,1,color='royalblue')
-#plt.legend()
-plt.xlabel('Values of k', fontsize=15)
-plt.ylabel('NCP', fontsize =15)
-filename='Figures/interplay_ncp'
-plt.savefig(filename, bbox_inches='tight')
-plt.show() 
